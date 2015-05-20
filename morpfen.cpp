@@ -37,7 +37,7 @@ Morpfen::Morpfen() : QWidget()
 
     // Les cases du morpion
     for(int i = 0; i < 9; i++)
-        m_case[i] = new QLineEdit(QString(""), this);
+        m_cases[i] = new QLineEdit(QString(""), this);
 
     // Creation du layout
     m_layout = new QGridLayout(this);
@@ -48,7 +48,7 @@ Morpfen::Morpfen() : QWidget()
     {
         for(int j = 0; j < 3; j++)
         {
-            m_layout->addWidget(m_case[i+j], i1, j);
+            m_layout->addWidget(m_cases[i+j], i1, j);
         }
     }
     m_layout->addWidget(m_quitter, 4, 0, 1, 3);
@@ -62,8 +62,8 @@ Morpfen::Morpfen() : QWidget()
     // Connexion des autres signaux
     for(int i = 0; i < 9; i++)
     {
-        connect(m_case[i], &QLineEdit::returnPressed, [this, i](){this->m_case[i]->setEnabled(false);});
-        connect(m_case[i], &QLineEdit::returnPressed, this, &Morpfen::analyser);
+        connect(m_cases[i], &QLineEdit::returnPressed, [this, i](){this->m_cases[i]->setEnabled(false);});
+        connect(m_cases[i], &QLineEdit::returnPressed, this, &Morpfen::analyser);
     }
 }
 
@@ -80,7 +80,7 @@ void Morpfen::quitter()
 void Morpfen::analyser()
 {
     // S'il y a alignement
-    if(test())
+    if(alignement())
     {
         toutGriser();  // On desactive les cases quand quelqu'un gagne
         QStringList list = m_infojoueur->text().split(","); // Nom du joueur qui gagne
@@ -116,36 +116,35 @@ void Morpfen::analyser()
 bool Morpfen::egalite(int i, int j, int k) const
 {
     // Les textes doivent etre non vides et egaux
-    return (!m_case[i]->text().isEmpty() &&
-            !m_case[j]->text().isEmpty() &&
-            !m_case[k]->text().isEmpty() &&
-            m_case[i]->text() == m_case[j]->text() &&
-            m_case[j]->text() == m_case[k]->text());
+    return (!m_cases[i]->text().isEmpty() &&
+            !m_cases[j]->text().isEmpty() &&
+            !m_cases[k]->text().isEmpty() &&
+            m_cases[i]->text() == m_cases[j]->text() &&
+            m_cases[j]->text() == m_cases[k]->text());
 }
 
-bool Morpfen::test() const
+bool Morpfen::alignement() const
 {
-    // Si alignement
-    if(egalite(0, 1, 2) ||  // 1ere ligne
-       egalite(3, 4, 5) ||  // 2e ligne
-       egalite(6, 7, 8) ||  // 3e ligne
-       egalite(0, 3, 6) ||  // 1ere colonne
-       egalite(1, 4, 7) ||  // 2e colonne
-       egalite(2, 5, 8) ||  // 3e colonne
-       egalite(6, 4, 2) ||  // Diagonale y=x
-       egalite(0, 4, 8)     // Diagonale y=-x
-       ) return true;
-
-    else
-        return false;
+    return (egalite(0, 1, 2) ||  // 1ere ligne
+            egalite(3, 4, 5) ||  // 2e ligne
+            egalite(6, 7, 8) ||  // 3e ligne
+            egalite(0, 3, 6) ||  // 1ere colonne
+            egalite(1, 4, 7) ||  // 2e colonne
+            egalite(2, 5, 8) ||  // 3e colonne
+            egalite(6, 4, 2) ||  // Diagonale y=x
+            egalite(0, 4, 8));   // Diagonale y=-x
 }
 
 bool Morpfen::plein() const
 {
     // Renvoie false si certaines cases ne sont pas remplies...
-    for(int i = 0; i < 9; i++)
-        if(m_case[i]->text().isEmpty())
+    for(QLineEdit* c : m_cases)
+    {
+        if(c->text().isEmpty())
+        {
             return false;
+        }
+    }
 
     // ...et true sinon
     return true;
@@ -154,16 +153,16 @@ bool Morpfen::plein() const
 void Morpfen::toutGriser()
 {
     // On rend inaccessibles toutes les cases
-    for(int i = 0; i < 9; i++)
-        m_case[i]->setEnabled(false);
+    for(QLineEdit* c : m_cases)
+        c->setEnabled(false);
 }
 
 void Morpfen::raz()
 {
-    for(int i = 0; i < 9; i++)
-        m_case[i]->clear();          // On vide les cases
+    for(QLineEdit* c : m_cases)
+        c->clear();          // On vide les cases
 
-    for(int i = 0; i < 9; i++)
-        m_case[i]->setEnabled(true); // On rend accessibles toutes les cases
+    for(QLineEdit* c : m_cases)
+        c->setEnabled(true); // On rend accessibles toutes les cases
 }
 
