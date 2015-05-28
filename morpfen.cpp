@@ -9,65 +9,65 @@ Morpfen::Morpfen() : QWidget()
     bool ok = false;
     do
     {
-        m_j1 = QInputDialog::getText(this,
+        myJ1 = QInputDialog::getText(this,
                                      "Morpfen : Joueurs",
                                      "Joueur 1, entre ton nom :",
                                      QLineEdit::Normal,
                                      QString(),
                                      &ok);
-    } while(!ok || m_j1.isEmpty());
+    } while(!ok || myJ1.isEmpty());
     ok = false;
     do
     {
-        m_j2 = QInputDialog::getText(this,
+        myJ2 = QInputDialog::getText(this,
                                      "Morpfen : Joueurs",
                                      "Joueur 2, entre ton nom (et un autre nom que Joueur 1 !) :",
                                      QLineEdit::Normal,
                                      QString(),
                                      &ok);
-    } while(!ok || m_j2.isEmpty() || (m_j2 == m_j1));
+    } while(!ok || myJ2.isEmpty() || (myJ2 == myJ1));
 
     // Affichage des noms pour verification
-    QMessageBox::information(this, "Morpfen : Joueurs", "Les joueurs sont " + m_j1 + " et " + m_j2 + ".");
+    QMessageBox::information(this, "Morpfen : Joueurs", "Les joueurs sont " + myJ1 + " et " + myJ2 + ".");
 
     // Creation des boutons et des labels
-    m_infojoueur = new QLabel(this);
-    m_infojoueur->setText(m_j1 + ", vas-y !!");
-    m_quitter = new QPushButton("Quitter", this);   // Bouton pour quitter
+    myLabelPlayerInfo = new QLabel(this);
+    myLabelPlayerInfo->setText(myJ1 + ", vas-y !!");
+    myPBQuitter = new QPushButton("Quitter", this);   // Bouton pour quitter
 
     // Les cases du morpion
     for(int i = 0; i < 9; i++)
-        m_cases[i] = new QLineEdit(QString(""), this);
+        myLEBoxes[i] = new QLineEdit(QString(""), this);
 
     // Creation du layout
-    m_layout = new QGridLayout(this);
+    myLayout = new QGridLayout(this);
 
     // Insertion des boutons ds le layout
-    m_layout->addWidget(m_infojoueur, 0, 0, 1, 3);
+    myLayout->addWidget(myLabelPlayerInfo, 0, 0, 1, 3);
     for(int i = 0, i1 = 1; i < 9; i += 3, i1++)
     {
         for(int j = 0; j < 3; j++)
         {
-            m_layout->addWidget(m_cases[i+j], i1, j);
+            myLayout->addWidget(myLEBoxes[i+j], i1, j);
         }
     }
-    m_layout->addWidget(m_quitter, 4, 0, 1, 3);
+    myLayout->addWidget(myPBQuitter, 4, 0, 1, 3);
 
     // Insertion du layout ds la fenetre
-    setLayout(m_layout);
+    setLayout(myLayout);
 
     // Connexion du signal quitter
-    connect(m_quitter, &QPushButton::clicked, this, &Morpfen::quitter);
+    connect(myPBQuitter, &QPushButton::clicked, this, &Morpfen::leave);
 
     // Connexion des autres signaux
     for(int i = 0; i < 9; i++)
     {
-        connect(m_cases[i], &QLineEdit::returnPressed, [this, i](){this->m_cases[i]->setEnabled(false);});
-        connect(m_cases[i], &QLineEdit::returnPressed, this, &Morpfen::analyser);
+        connect(myLEBoxes[i], &QLineEdit::returnPressed, [this, i](){this->myLEBoxes[i]->setEnabled(false);});
+        connect(myLEBoxes[i], &QLineEdit::returnPressed, this, &Morpfen::analyze);
     }
 }
 
-void Morpfen::quitter()
+void Morpfen::leave()
 {
     // Veut-on vraiment quitter ?
     if(QMessageBox::critical(this,
@@ -77,70 +77,70 @@ void Morpfen::quitter()
         QGuiApplication::quit();
 }
 
-void Morpfen::analyser()
+void Morpfen::analyze()
 {
     // S'il y a alignement
-    if(alignement())
+    if(alignment())
     {
-        toutGriser();  // On desactive les cases quand quelqu'un gagne
-        QStringList list = m_infojoueur->text().split(","); // Nom du joueur qui gagne
+        disableBoxes();  // On desactive les cases quand quelqu'un gagne
+        QStringList list = myLabelPlayerInfo->text().split(","); // Nom du joueur qui gagne
 
         // Blabla + demande si on veut rejouer
         if(QMessageBox::warning(this,
                                 "Morpfen : Victoire",
                                 list[0]+" gagne la partie !! C'est un boss ;)\n\nVoulez-vous rejouer ? :)",
                                 QMessageBox::Yes|QMessageBox::No) == QMessageBox::Yes)
-            raz();
+            reset();
     }
     else    // Le morpion est-il plein ?
     {
-        if(plein()) // Personne ne gagne
+        if(full()) // Personne ne gagne
         {
             if(QMessageBox::warning(this,
                                     "Morpfen : Match nul",
                                     "Personne ne gagne la partie :0 Bande de blaireaux -_-\n\nVoulez-vous rejouer ? :)",
                                     QMessageBox::Yes|QMessageBox::No) == QMessageBox::Yes)
-                raz();
+                reset();
         }
         else    // On doit encore jouer => on change de joueur
         {
-            QStringList list = m_infojoueur->text().split(",");
-            if(list[0] == m_j1)
-                m_infojoueur->setText(m_j2 + ", vas-y !!");
+            QStringList list = myLabelPlayerInfo->text().split(",");
+            if(list[0] == myJ1)
+                myLabelPlayerInfo->setText(myJ2 + ", vas-y !!");
             else
-                m_infojoueur->setText(m_j1 + ", vas-y !!");
+                myLabelPlayerInfo->setText(myJ1 + ", vas-y !!");
         }
     }
 }
 
-bool Morpfen::egalite(int i, int j, int k) const
+bool Morpfen::equal(int i, int j, int k) const
 {
     // Les textes doivent etre non vides et egaux
-    return (!m_cases[i]->text().isEmpty() &&
-            !m_cases[j]->text().isEmpty() &&
-            !m_cases[k]->text().isEmpty() &&
-            m_cases[i]->text() == m_cases[j]->text() &&
-            m_cases[j]->text() == m_cases[k]->text());
+    return (!myLEBoxes[i]->text().isEmpty() &&
+            !myLEBoxes[j]->text().isEmpty() &&
+            !myLEBoxes[k]->text().isEmpty() &&
+            myLEBoxes[i]->text() == myLEBoxes[j]->text() &&
+            myLEBoxes[j]->text() == myLEBoxes[k]->text());
 }
 
-bool Morpfen::alignement() const
+bool Morpfen::alignment() const
 {
-    return (egalite(0, 1, 2) ||  // 1ere ligne
-            egalite(3, 4, 5) ||  // 2e ligne
-            egalite(6, 7, 8) ||  // 3e ligne
-            egalite(0, 3, 6) ||  // 1ere colonne
-            egalite(1, 4, 7) ||  // 2e colonne
-            egalite(2, 5, 8) ||  // 3e colonne
-            egalite(6, 4, 2) ||  // Diagonale y=x
-            egalite(0, 4, 8));   // Diagonale y=-x
+    return (equal(0, 1, 2) ||  // 1ere ligne
+            equal(3, 4, 5) ||  // 2e ligne
+            equal(6, 7, 8) ||  // 3e ligne
+            equal(0, 3, 6) ||  // 1ere colonne
+            equal(1, 4, 7) ||  // 2e colonne
+            equal(2, 5, 8) ||  // 3e colonne
+            equal(6, 4, 2) ||  // Diagonale y=x
+            equal(0, 4, 8));   // Diagonale y=-x
 }
 
-bool Morpfen::plein() const
+bool Morpfen::full() const
 {
     // Renvoie false si certaines cases ne sont pas remplies...
-    for(QLineEdit* c : m_cases)
+    for(QLineEdit* box : myLEBoxes)
     {
-        if(c->text().isEmpty())
+        if(box->text().isEmpty())
         {
             return false;
         }
@@ -150,19 +150,19 @@ bool Morpfen::plein() const
     return true;
 }
 
-void Morpfen::toutGriser()
+void Morpfen::disableBoxes()
 {
     // On rend inaccessibles toutes les cases
-    for(QLineEdit* c : m_cases)
-        c->setEnabled(false);
+    for(QLineEdit* box : myLEBoxes)
+        box->setEnabled(false);
 }
 
-void Morpfen::raz()
+void Morpfen::reset()
 {
-    for(QLineEdit* c : m_cases)
-        c->clear();          // On vide les cases
+    for(QLineEdit* box : myLEBoxes)
+        box->clear();          // On vide les cases
 
-    for(QLineEdit* c : m_cases)
-        c->setEnabled(true); // On rend accessibles toutes les cases
+    for(QLineEdit* box : myLEBoxes)
+        box->setEnabled(true); // On rend accessibles toutes les cases
 }
 
